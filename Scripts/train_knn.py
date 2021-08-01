@@ -26,10 +26,11 @@ from tensorflow.keras.applications import *
 import tensorflow_hub as hub
 
 import tensorflow_datasets as tfds
+
 tfds.disable_progress_bar()
 
 # Fix the random seeds
-SEEDS=666
+SEEDS = 666
 
 np.random.seed(SEEDS)
 tf.random.set_seed(SEEDS)
@@ -48,12 +49,12 @@ train_ds, validation_ds = tfds.load(
 
 """#### Define the class"""
 
-CLASSES = ['daisy', 'dandelion', 'roses', 'sunflowers', 'tulips']
+CLASSES = ["daisy", "dandelion", "roses", "sunflowers", "tulips"]
 
 """#### Count of Training and Validation Samples"""
 
-print("Number of Training Samples: ",len(train_ds))
-print("Number of Validation Samples: ",len(validation_ds))
+print("Number of Training Samples: ", len(train_ds))
+print("Number of Validation Samples: ", len(validation_ds))
 
 """### Visualise the Dataset"""
 
@@ -78,6 +79,7 @@ def preprocess_test(image, label):
     image = tf.cast(image, tf.float32) / 255.0
     return image, label
 
+
 """## Creating the pipeline for validation sample"""
 
 validation_ds = (
@@ -93,17 +95,19 @@ module = hub.KerasLayer(model_url, trainable=False)
 
 """## BiT Model"""
 
+
 class MyBiTModel(tf.keras.Model):
-  def __init__(self, module):
-    super().__init__()
-    self.dense1 = tf.keras.layers.Dense(128)
-    self.normalize = Lambda(lambda a: tf.math.l2_normalize(a, axis=1))
-    self.bit_model = module
-  
-  def call(self, images):
-    bit_embedding = self.bit_model(images)
-    dense1_representations = self.dense1(bit_embedding)
-    return self.normalize(dense1_representations)
+    def __init__(self, module):
+        super().__init__()
+        self.dense1 = tf.keras.layers.Dense(128)
+        self.normalize = Lambda(lambda a: tf.math.l2_normalize(a, axis=1))
+        self.bit_model = module
+
+    def call(self, images):
+        bit_embedding = self.bit_model(images)
+        dense1_representations = self.dense1(bit_embedding)
+        return self.normalize(dense1_representations)
+
 
 model = MyBiTModel(module=module)
 
@@ -128,10 +132,10 @@ Determining out nearest neighbors for the features of our query image
 
 validation_features = model.predict(images)
 start = time.time()
-neighbors = NearestNeighbors(n_neighbors=5,
-    algorithm='brute',
-    metric='euclidean').fit(validation_features)
-print('Time taken: {:.5f} secs'.format(time.time() - start))
+neighbors = NearestNeighbors(n_neighbors=5, algorithm="brute", metric="euclidean").fit(
+    validation_features
+)
+print("Time taken: {:.5f} secs".format(time.time() - start))
 
 """### Determine the neighbors nearest to our query image"""
 
@@ -141,10 +145,11 @@ for i in range(5):
 
 """### Visualize a neighbor"""
 
-plt.imshow(images[indices[0][1]], interpolation='lanczos')
+plt.imshow(images[indices[0][1]], interpolation="lanczos")
 plt.show()
 
 """## Visualizing the nearest neighbors on images"""
+
 
 def plot_images(images, labels, distances):
     plt.figure(figsize=(20, 10))
@@ -154,51 +159,52 @@ def plot_images(images, labels, distances):
         if i == 0:
             ax.set_title("Query Image\n" + "Label: {}".format(CLASSES[labels[i]]))
         else:
-            ax.set_title("Similar Image # " + str(i) +
-                         "\nDistance: " +
-                         str(float("{0:.2f}".format(distances[i]))) + 
-                         "\nLabel: {}".format(CLASSES[labels[i]]))
+            ax.set_title(
+                "Similar Image # "
+                + str(i)
+                + "\nDistance: "
+                + str(float("{0:.2f}".format(distances[i])))
+                + "\nLabel: {}".format(CLASSES[labels[i]])
+            )
         plt.imshow(image)
+
 
 for i in range(6):
     random_index = int(np.random.choice(images.shape[0], 1))
-    distances, indices = neighbors.kneighbors(
-        [validation_features[random_index]])
-    
+    distances, indices = neighbors.kneighbors([validation_features[random_index]])
+
     # Don't take the first closest image as it will be the same image
-    similar_images = [images[random_index]] + \
-        [images[indices[0][i]] for i in range(1, 4)]
-    similar_labels = [labels[random_index]] + \
-        [labels[indices[0][i]] for i in range(1, 4)]
+    similar_images = [images[random_index]] + [
+        images[indices[0][i]] for i in range(1, 4)
+    ]
+    similar_labels = [labels[random_index]] + [
+        labels[indices[0][i]] for i in range(1, 4)
+    ]
     plot_images(similar_images, similar_labels, distances[0])
 
 """## Visualizing the embedding space for the current validation batch"""
 
 tsne_results = TSNE(n_components=2).fit_transform(validation_features)
 
-color_map = plt.cm.get_cmap('coolwarm')
-scatter_plot = plt.scatter(tsne_results[:, 0],
-                           tsne_results[:, 1],
-                           c=labels,
-                           cmap=color_map)
+color_map = plt.cm.get_cmap("coolwarm")
+scatter_plot = plt.scatter(
+    tsne_results[:, 0], tsne_results[:, 1], c=labels, cmap=color_map
+)
 plt.colorbar(scatter_plot)
 plt.show()
 
 """## Visualizing the embedding space for the entire validation pipeline"""
 
-validation_labels = [label
-    for _, labels in validation_ds for label in labels
-]
+validation_labels = [label for _, labels in validation_ds for label in labels]
 print(len(validation_labels))
 
 validation_features = model.predict(validation_ds)
 
 tsne_results = TSNE(n_components=2).fit_transform(validation_features)
 
-color_map = plt.cm.get_cmap('coolwarm')
-scatter_plot = plt.scatter(tsne_results[:, 0],
-                           tsne_results[:, 1],
-                           c=validation_labels,
-                           cmap=color_map)
+color_map = plt.cm.get_cmap("coolwarm")
+scatter_plot = plt.scatter(
+    tsne_results[:, 0], tsne_results[:, 1], c=validation_labels, cmap=color_map
+)
 plt.colorbar(scatter_plot)
 plt.show()
