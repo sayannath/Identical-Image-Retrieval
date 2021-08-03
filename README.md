@@ -13,6 +13,9 @@ I used the Flowers dataset for experiments.
 
 <img src="data/sample_dataset_two.png">
 
+## Method Used
+<img src="data/Indentical Image Retrieval.jpg">
+
 ## Model Used
 
 I fine-tuned pre-trained models for minimizing the Triplet Loss. I experimented with the following pre-trained models:
