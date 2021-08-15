@@ -9,7 +9,7 @@ This project presents a simple framework to retrieve images similar to a query i
 * Grab an image (I) from the validation set and extract its features using the same CNN model (A).
 * Use the same kNN model (B) to calculate the nearest neighbors of I.
 
-<img src="data/Indentical Image Retrieval.jpg">
+<img src="data/proposed_architecture.png">
 
 I experimented with the Flower Dataset.
 
